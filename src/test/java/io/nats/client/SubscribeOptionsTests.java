@@ -13,15 +13,27 @@
 
 package io.nats.client;
 
+import static io.nats.client.SubscribeOptions.DEFAULT_ORDERED_HEARTBEAT;
+import static io.nats.client.support.NatsConstants.EMPTY;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoDeliverGroupMismatch;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoDeliverSubjectMismatch;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoDurableMismatch;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithBind;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithDeliverGroup;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithDeliverSubject;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithDurable;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedRequiresAckPolicyNone;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedRequiresMaxDeliver;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.nats.client.api.AckPolicy;
 import io.nats.client.api.ConsumerConfiguration;
 import io.nats.client.utils.TestBase;
 import org.junit.jupiter.api.Test;
-
-import static io.nats.client.SubscribeOptions.DEFAULT_ORDERED_HEARTBEAT;
-import static io.nats.client.support.NatsConstants.EMPTY;
-import static io.nats.client.support.NatsJetStreamClientError.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class SubscribeOptionsTests extends TestBase {
 
@@ -213,7 +225,7 @@ public class SubscribeOptionsTests extends TestBase {
 
     @Test
     public void testPullValidation() {
-        PullSubscribeOptions.Builder builder1 = PullSubscribeOptions.builder();
+        PullSubscribeOptions.Builder<?> builder1 = PullSubscribeOptions.builder();
         assertThrows(IllegalArgumentException.class, () -> builder1.stream(HAS_DOT).build());
         assertThrows(IllegalArgumentException.class, () -> builder1.durable(HAS_DOT).build());
 

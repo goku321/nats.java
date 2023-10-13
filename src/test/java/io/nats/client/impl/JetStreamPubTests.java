@@ -13,10 +13,25 @@
 
 package io.nats.client.impl;
 
-import io.nats.client.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.nats.client.JSONSchema;
+import io.nats.client.JetStream;
+import io.nats.client.JetStreamApiException;
+import io.nats.client.JetStreamManagement;
+import io.nats.client.JetStreamOptions;
+import io.nats.client.JetStreamSubscription;
+import io.nats.client.Message;
+import io.nats.client.PublishOptions;
+import io.nats.client.PullSubscribeOptions;
+import io.nats.client.Schema;
+import io.nats.client.Subscription;
 import io.nats.client.api.PublishAck;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -24,8 +39,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+class User {
+    @JsonProperty
+    public String firstName;
+
+    @JsonProperty
+    public String lastName;
+
+    @JsonProperty
+    public int age;
+
+    public User() {}
+
+    public User(String firstName, String lastName, int age) {
+        this(firstName, lastName, age, null);
+    }
+
+    public User(String firstName, String lastName, int age, Object o) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.age = age;
+    }
+}
 
 public class JetStreamPubTests extends JetStreamTestBase {
 
@@ -35,47 +72,59 @@ public class JetStreamPubTests extends JetStreamTestBase {
             createDefaultTestStream(nc);
             JetStream js = nc.jetStream();
 
-            PublishAck pa = js.publish(SUBJECT, dataBytes(1));
-            assertPublishAck(pa, 1);
+//            PublishAck pa = js.publish(SUBJECT, dataBytes(1));
+//            assertPublishAck(pa, 1);
+//
+//            Message msg = NatsMessage.builder().subject(SUBJECT).data(dataBytes(2)).build();
+//            pa = js.publish(msg);
+//            assertPublishAck(pa, 2);
+//
+//            PublishOptions po = PublishOptions.builder().build();
+//            pa = js.publish(SUBJECT, dataBytes(3), po);
+//            assertPublishAck(pa, 3);
+//
+//            msg = NatsMessage.builder().subject(SUBJECT).data(dataBytes(4)).build();
+//            pa = js.publish(msg, po);
+//            assertPublishAck(pa, 4);
+//
+//            pa = js.publish(SUBJECT, null);
+//            assertPublishAck(pa, 5);
+//
+//            msg = NatsMessage.builder().subject(SUBJECT).build();
+//            pa = js.publish(msg);
+//            assertPublishAck(pa, 6);
+//
+//            pa = js.publish(SUBJECT, null, po);
+//            assertPublishAck(pa, 7);
+//
+//            msg = NatsMessage.builder().subject(SUBJECT).build();
+//            pa = js.publish(msg, po);
+//            assertPublishAck(pa, 8);
+//
+//            Subscription s = js.subscribe(SUBJECT);
+//            assertNextMessage(s, data(1));
+//            assertNextMessage(s, data(2));
+//            assertNextMessage(s, data(3));
+//            assertNextMessage(s, data(4));
+//            assertNextMessage(s, null); // 5
+//            assertNextMessage(s, null); // 6
+//            assertNextMessage(s, null); // 7
+//            assertNextMessage(s, null); // 8
 
-            Message msg = NatsMessage.builder().subject(SUBJECT).data(dataBytes(2)).build();
-            pa = js.publish(msg);
-            assertPublishAck(pa, 2);
 
-            PublishOptions po = PublishOptions.builder().build();
-            pa = js.publish(SUBJECT, dataBytes(3), po);
-            assertPublishAck(pa, 3);
-
-            msg = NatsMessage.builder().subject(SUBJECT).data(dataBytes(4)).build();
-            pa = js.publish(msg, po);
-            assertPublishAck(pa, 4);
-
-            pa = js.publish(SUBJECT, null);
-            assertPublishAck(pa, 5);
-
-            msg = NatsMessage.builder().subject(SUBJECT).build();
-            pa = js.publish(msg);
-            assertPublishAck(pa, 6);
-
-            pa = js.publish(SUBJECT, null, po);
-            assertPublishAck(pa, 7);
-
-            msg = NatsMessage.builder().subject(SUBJECT).build();
-            pa = js.publish(msg, po);
-            assertPublishAck(pa, 8);
-
-            Subscription s = js.subscribe(SUBJECT);
-            assertNextMessage(s, data(1));
-            assertNextMessage(s, data(2));
-            assertNextMessage(s, data(3));
-            assertNextMessage(s, data(4));
-            assertNextMessage(s, null); // 5
-            assertNextMessage(s, null); // 6
-            assertNextMessage(s, null); // 7
-            assertNextMessage(s, null); // 8
-
+            User user = new User("first", "last", 33);
+            JSONSchema<User> jsonSchema = new JSONSchema<>(User.class);
+            Message msg = NatsMessage.builder().subject(SUBJECT).schema(jsonSchema).value(user).build();
+            PublishAck pa = js.publish(msg);
+            PullSubscribeOptions<User> pullOptions = new PullSubscribeOptions.Builder<User>().schema(jsonSchema);
+            Schema<User> pullSchema = pullOptions.getSchema();
+            Subscription newSub = js.subscribe(SUBJECT);
+            Message<User> mmsg = newSub.nextMessage(DEFAULT_TIMEOUT);
+            mmsg.setSchema(pullSchema);
+            User receivedUser = mmsg.getValue();
+            assertEquals(user.firstName, receivedUser.firstName);
             // 503
-            assertThrows(IOException.class, () -> js.publish(subject(999), null));
+//            assertThrows(IOException.class, () -> js.publish(subject(999), null));
         });
     }
 

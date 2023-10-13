@@ -13,16 +13,20 @@
 
 package io.nats.client;
 
+import static io.nats.client.support.Validator.emptyAsNull;
+import static io.nats.client.support.Validator.emptyOrNullAs;
+import static io.nats.client.support.Validator.validateDurationNotRequiredGtOrEqZero;
+import static io.nats.client.support.Validator.validateGtEqMinus1;
+import static io.nats.client.support.Validator.validateStreamName;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.time.Duration;
 import java.util.Properties;
-
-import static io.nats.client.support.Validator.*;
 
 /**
  * The PublishOptions class specifies the options for publishing with JetStream enabled servers.
  * Options are created using a {@link PublishOptions.Builder Builder}.
  */
-public class PublishOptions {
+public class PublishOptions<T> {
     /**
      * Use this variable for timeout in publish options.
      */
@@ -45,8 +49,9 @@ public class PublishOptions {
     private final long expectedLastSeq;
     private final long expectedLastSubSeq;
     private final String msgId;
+    private final Schema<T> serializer;
 
-    private PublishOptions(String stream, Duration streamTimeout, String expectedStream, String expectedLastId, long expectedLastSeq, long expectedLastSubSeq, String msgId) {
+    private PublishOptions(String stream, Duration streamTimeout, String expectedStream, String expectedLastId, long expectedLastSeq, long expectedLastSubSeq, String msgId, Schema<T> serializer) {
         this.stream = stream;
         this.streamTimeout = streamTimeout;
         this.expectedStream = expectedStream;
@@ -54,6 +59,7 @@ public class PublishOptions {
         this.expectedLastSeq = expectedLastSeq;
         this.expectedLastSubSeq = expectedLastSubSeq;
         this.msgId = msgId;
+        this.serializer = serializer;
     }
 
     /**
@@ -122,6 +128,8 @@ public class PublishOptions {
         return this.msgId;
     }
 
+    public Schema<T> getSerializer() { return this.serializer; }
+
     /**
      * Creates a builder for the publish options.
      * @return the builder.s
@@ -144,6 +152,9 @@ public class PublishOptions {
         long expectedLastSeq = UNSET_LAST_SEQUENCE;
         long expectedLastSubSeq = UNSET_LAST_SEQUENCE;
         String msgId;
+        Schema<?> serializer = new JSONSchema<>(null);
+
+        private static final JsonNodeFactory JSON_NODE_FACTORY = JsonNodeFactory.instance;
 
         /**
          * Constructs a new publish options Builder with the default values.
@@ -241,6 +252,11 @@ public class PublishOptions {
             return this;
         }
 
+        public Builder serializer(Schema<?> serializer) {
+            this.serializer = serializer;
+            return this;
+        }
+
         /**
          * Clears the expected so the build can be re-used.
          * Clears the expectedLastId, expectedLastSequence and messageId fields.
@@ -259,7 +275,7 @@ public class PublishOptions {
          * @return publish options
          */
         public PublishOptions build() {
-            return new PublishOptions(stream, streamTimeout, expectedStream, expectedLastId, expectedLastSeq, expectedLastSubSeq, msgId);
+            return new PublishOptions(stream, streamTimeout, expectedStream, expectedLastId, expectedLastSeq, expectedLastSubSeq, msgId, serializer);
         }
     }
 }

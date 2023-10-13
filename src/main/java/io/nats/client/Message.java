@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException;
  * <p>The byte[] returned by {@link #getData() getData()} is not shared with any library code
  * and is safe to manipulate.
  */
-public interface Message {
+public interface Message<T> {
 
 	/**
 	 * @return the subject that this message was sent to
@@ -65,6 +65,10 @@ public interface Message {
 	 * @return the data from the message
 	 */
 	byte[] getData();
+
+	T getValue();
+
+	void setSchema(Schema<T> schema);
 
 	/**
 	 * @return if is utf8Mode

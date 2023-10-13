@@ -13,13 +13,23 @@
 
 package io.nats.client;
 
+import static io.nats.client.support.NatsJetStreamClientError.JsSoDeliverGroupMismatch;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoDeliverSubjectMismatch;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoDurableMismatch;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithBind;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithDeliverGroup;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithDeliverSubject;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedNotAllowedWithDurable;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedRequiresAckPolicyNone;
+import static io.nats.client.support.NatsJetStreamClientError.JsSoOrderedRequiresMaxDeliver;
+import static io.nats.client.support.Validator.emptyAsNull;
+import static io.nats.client.support.Validator.validateDurable;
+import static io.nats.client.support.Validator.validateMustMatchIfBothSupplied;
+import static io.nats.client.support.Validator.validateNotSupplied;
+import static io.nats.client.support.Validator.validateStreamName;
 import io.nats.client.api.AckPolicy;
 import io.nats.client.api.ConsumerConfiguration;
-
 import java.time.Duration;
-
-import static io.nats.client.support.NatsJetStreamClientError.*;
-import static io.nats.client.support.Validator.*;
 
 /**
  * The SubscribeOptions is the base class for PushSubscribeOptions and PullSubscribeOptions
@@ -34,6 +44,7 @@ public abstract class SubscribeOptions {
     protected final boolean ordered;
     protected final long messageAlarmTime;
     protected final ConsumerConfiguration consumerConfig;
+//    protected final Schema<T> schema;
 
     @SuppressWarnings("rawtypes") // Don't need the type of the builder to get it's vars
     protected SubscribeOptions(Builder builder, boolean isPull, boolean isOrdered, String deliverSubject, String deliverGroup) {
@@ -42,6 +53,7 @@ public abstract class SubscribeOptions {
         bind = builder.bind;
         ordered = isOrdered;
         messageAlarmTime = builder.messageAlarmTime;
+//        schema = schemaType;
 
         if (ordered && bind) {
             throw JsSoOrderedNotAllowedWithBind.instance();
@@ -147,6 +159,8 @@ public abstract class SubscribeOptions {
         return consumerConfig;
     }
 
+//    public Schema<T> getSchema() { return schema; };
+
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" +
@@ -166,6 +180,7 @@ public abstract class SubscribeOptions {
         String durable;
         ConsumerConfiguration cc;
         long messageAlarmTime = -1;
+//        Schema<T> schema;
 
         protected abstract B getThis();
 
@@ -230,5 +245,10 @@ public abstract class SubscribeOptions {
          * @return subscribe options
          */
         public abstract SO build();
+
+//        public B schema(Schema<T> schema) {
+//            this.schema = schema;
+//            return getThis();
+//        }
     }
 }

@@ -13,26 +13,29 @@
 
 package io.nats.client.impl;
 
-import io.nats.client.Connection;
-import io.nats.client.Message;
-import io.nats.client.Subscription;
-import io.nats.client.support.ByteArrayBuilder;
-import io.nats.client.support.IncomingHeadersProcessor;
-import io.nats.client.support.Status;
-
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.concurrent.TimeoutException;
-
-import static io.nats.client.support.NatsConstants.*;
+import static io.nats.client.support.NatsConstants.EMPTY_BODY;
+import static io.nats.client.support.NatsConstants.HPUB_SP_BYTES;
+import static io.nats.client.support.NatsConstants.PUB_SP_BYTES;
+import static io.nats.client.support.NatsConstants.SP;
 import static io.nats.client.support.NatsJetStreamConstants.JS_ACK_SUBJECT_PREFIX;
 import static io.nats.client.support.Validator.validateReplyTo;
 import static io.nats.client.support.Validator.validateSubject;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.nats.client.Connection;
+import io.nats.client.Message;
+import io.nats.client.Schema;
+import io.nats.client.Subscription;
+import io.nats.client.support.ByteArrayBuilder;
+import io.nats.client.support.IncomingHeadersProcessor;
+import io.nats.client.support.Status;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
-public class NatsMessage implements Message {
+public class NatsMessage<T> implements Message<T> {
 
     protected static final String NOT_A_JET_STREAM_MESSAGE = "Message is not a JetStream message";
 
@@ -41,6 +44,9 @@ public class NatsMessage implements Message {
     protected byte[] data;
     protected boolean utf8mode;
     protected Headers headers;
+    // for schema
+    protected T content;
+    protected Schema<T> schema;
 
     // incoming specific : subject, replyTo, data and these fields
     protected String sid;
@@ -286,6 +292,16 @@ public class NatsMessage implements Message {
         return data;
     }
 
+    @Override
+    public T getValue() {
+        return schema.decode(subject, data);
+    }
+
+    @Override
+    public void setSchema(Schema<T> schema) {
+        this.schema = schema;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -448,12 +464,14 @@ public class NatsMessage implements Message {
      * The builder is for building normal publish/request messages,
      * as an option for client use developers instead of the normal constructor
      */
-    public static class Builder {
+    public static class Builder<T> {
         private String subject;
         private String replyTo;
         private Headers headers;
         private byte[] data;
         private boolean utf8mode;
+        private T content;
+        private Schema<T> schema;
 
         /**
          * Set the subject
@@ -525,6 +543,16 @@ public class NatsMessage implements Message {
             return this;
         }
 
+        public Builder<T> value(T value) {
+            this.content = value;
+            return this;
+        }
+
+        public Builder<?> schema(Schema<T> schema) {
+            this.schema = schema;
+            return this;
+        }
+
         /**
          * Set if the subject should be treated as utf
          *
@@ -544,6 +572,16 @@ public class NatsMessage implements Message {
          * @return the {@code NatsMessage}
          */
         public NatsMessage build() {
+            if (schema != null) {
+                byte[] newByte;
+                try {
+                    newByte = schema.encode(content);
+                } catch (JsonProcessingException e) {
+                    return null;
+                }
+
+                return new NatsMessage(subject, replyTo, headers, newByte, utf8mode);
+            }
             return new NatsMessage(subject, replyTo, headers, data, utf8mode);
         }
     }

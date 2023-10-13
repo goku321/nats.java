@@ -13,22 +13,65 @@
 
 package io.nats.client.api;
 
+import static io.nats.client.support.ApiConstants.ACK_POLICY;
+import static io.nats.client.support.ApiConstants.ACK_POLICY_RE;
+import static io.nats.client.support.ApiConstants.ACK_WAIT;
+import static io.nats.client.support.ApiConstants.ACK_WAIT_RE;
+import static io.nats.client.support.ApiConstants.BACKOFF;
+import static io.nats.client.support.ApiConstants.DELIVER_GROUP;
+import static io.nats.client.support.ApiConstants.DELIVER_GROUP_RE;
+import static io.nats.client.support.ApiConstants.DELIVER_POLICY;
+import static io.nats.client.support.ApiConstants.DELIVER_POLICY_RE;
+import static io.nats.client.support.ApiConstants.DELIVER_SUBJECT;
+import static io.nats.client.support.ApiConstants.DELIVER_SUBJECT_RE;
+import static io.nats.client.support.ApiConstants.DESCRIPTION;
+import static io.nats.client.support.ApiConstants.DESCRIPTION_RE;
+import static io.nats.client.support.ApiConstants.DURABLE_NAME;
+import static io.nats.client.support.ApiConstants.DURABLE_NAME_RE;
+import static io.nats.client.support.ApiConstants.FILTER_SUBJECT;
+import static io.nats.client.support.ApiConstants.FILTER_SUBJECT_RE;
+import static io.nats.client.support.ApiConstants.FLOW_CONTROL;
+import static io.nats.client.support.ApiConstants.FLOW_CONTROL_RE;
+import static io.nats.client.support.ApiConstants.HEADERS_ONLY;
+import static io.nats.client.support.ApiConstants.HEADERS_ONLY_RE;
+import static io.nats.client.support.ApiConstants.IDLE_HEARTBEAT;
+import static io.nats.client.support.ApiConstants.IDLE_HEARTBEAT_RE;
+import static io.nats.client.support.ApiConstants.INACTIVE_THRESHOLD;
+import static io.nats.client.support.ApiConstants.INACTIVE_THRESHOLD_RE;
+import static io.nats.client.support.ApiConstants.MAX_ACK_PENDING;
+import static io.nats.client.support.ApiConstants.MAX_ACK_PENDING_RE;
+import static io.nats.client.support.ApiConstants.MAX_BATCH;
+import static io.nats.client.support.ApiConstants.MAX_BATCH_RE;
+import static io.nats.client.support.ApiConstants.MAX_BYTES;
+import static io.nats.client.support.ApiConstants.MAX_BYTES_RE;
+import static io.nats.client.support.ApiConstants.MAX_DELIVER;
+import static io.nats.client.support.ApiConstants.MAX_DELIVER_RE;
+import static io.nats.client.support.ApiConstants.MAX_EXPIRES;
+import static io.nats.client.support.ApiConstants.MAX_EXPIRES_RE;
+import static io.nats.client.support.ApiConstants.MAX_WAITING_RE;
+import static io.nats.client.support.ApiConstants.OPT_START_SEQ;
+import static io.nats.client.support.ApiConstants.OPT_START_SEQ_RE;
+import static io.nats.client.support.ApiConstants.OPT_START_TIME;
+import static io.nats.client.support.ApiConstants.OPT_START_TIME_RE;
+import static io.nats.client.support.ApiConstants.RATE_LIMIT_BPS;
+import static io.nats.client.support.ApiConstants.RATE_LIMIT_BPS_RE;
+import static io.nats.client.support.ApiConstants.REPLAY_POLICY;
+import static io.nats.client.support.ApiConstants.REPLAY_POLICY_RE;
+import static io.nats.client.support.ApiConstants.SAMPLE_FREQ;
+import static io.nats.client.support.ApiConstants.SAMPLE_FREQ_RE;
+import static io.nats.client.support.JsonUtils.beginJson;
+import static io.nats.client.support.JsonUtils.endJson;
+import static io.nats.client.support.Validator.emptyAsNull;
 import io.nats.client.PullSubscribeOptions;
 import io.nats.client.PushSubscribeOptions;
 import io.nats.client.support.ApiConstants;
 import io.nats.client.support.JsonSerializable;
 import io.nats.client.support.JsonUtils;
-
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
-
-import static io.nats.client.support.ApiConstants.*;
-import static io.nats.client.support.JsonUtils.beginJson;
-import static io.nats.client.support.JsonUtils.endJson;
-import static io.nats.client.support.Validator.emptyAsNull;
 
 /**
  * The ConsumerConfiguration class specifies the configuration for creating a JetStream consumer on the client and
@@ -1028,7 +1071,7 @@ public class ConsumerConfiguration implements JsonSerializable {
          * Builds the PullSubscribeOptions with this configuration
          * @return The PullSubscribeOptions.
          */
-        public PullSubscribeOptions buildPullSubscribeOptions() {
+        public PullSubscribeOptions<?> buildPullSubscribeOptions() {
             return PullSubscribeOptions.builder().configuration(build()).build();
         }
     }

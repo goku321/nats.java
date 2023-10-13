@@ -39,6 +39,17 @@ repositories {
 
 dependencies {
     implementation 'net.i2p.crypto:eddsa:0.3.0'
+    implementation 'com.fasterxml:jackson-xml-databind:0.6.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.1'
+    implementation 'io.netty:netty-buffer:4.1.95.Final'
+    implementation 'org:apache:avro'
+    implementation 'org.apache.avro:avro:1.11.2'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'joda-time:joda-time:2.12.5'
+    implementation 'org.projectlombok:lombok-utils:1.18.12'
+    implementation 'org.projectlombok:lombok:1.18.20'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.fasterxml.jackson.module:jackson-module-jsonSchema:2.14.2'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
     testImplementation 'io.nats:jnats-server-runner:1.0.9'
 }

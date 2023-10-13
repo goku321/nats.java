@@ -17,18 +17,23 @@ package io.nats.client;
  * The PullSubscribeOptions class specifies the options for subscribing with JetStream enabled servers.
  * Options are set using the {@link PullSubscribeOptions.Builder} or static helper methods.
  */
-public class PullSubscribeOptions extends SubscribeOptions {
-
-    private PullSubscribeOptions(Builder builder) {
+public class PullSubscribeOptions<T> extends SubscribeOptions {
+    Schema<T> schema;
+    private PullSubscribeOptions(Builder<T> builder) {
         super(builder, true, false, null, null);
+        this.schema = builder.schema;
+    }
+
+    public Schema<T> getSchema() {
+        return schema;
     }
 
     /**
      * Macro to start a PullSubscribeOptions builder
      * @return push subscribe options builder
      */
-    public static Builder builder() {
-        return new Builder();
+    public static Builder<?> builder() {
+        return new Builder<>();
     }
 
     /**
@@ -38,19 +43,20 @@ public class PullSubscribeOptions extends SubscribeOptions {
      * @param durable the durable name
      * @return push subscribe options
      */
-    public static PullSubscribeOptions bind(String stream, String durable) {
-        return new PullSubscribeOptions.Builder().stream(stream).durable(durable).bind(true).build();
+    public static PullSubscribeOptions<?> bind(String stream, String durable) {
+        return new PullSubscribeOptions.Builder<>().stream(stream).durable(durable).bind(true).build();
     }
 
     /**
      * PullSubscribeOptions can be created using a Builder. The builder supports chaining and will
      * create a default set of options if no methods are calls.
      */
-    public static class Builder
-            extends SubscribeOptions.Builder<Builder, PullSubscribeOptions> {
+    public static class Builder<T>
+            extends SubscribeOptions.Builder<Builder<T>, PullSubscribeOptions<T>> {
 
+        Schema<T> schema;
         @Override
-        protected Builder getThis() {
+        protected Builder<T> getThis() {
             return this;
         }
 
@@ -59,8 +65,13 @@ public class PullSubscribeOptions extends SubscribeOptions {
          * @return pull subscribe options
          */
         @Override
-        public PullSubscribeOptions build() {
-            return new PullSubscribeOptions(this);
+        public PullSubscribeOptions<T> build() {
+            return new PullSubscribeOptions<>(this);
+        }
+
+        public PullSubscribeOptions<T> schema(Schema<T> schema) {
+            this.schema = schema;
+            return new PullSubscribeOptions<>(this);
         }
     }
 }
